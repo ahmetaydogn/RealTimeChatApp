@@ -9,30 +9,16 @@ namespace DataAccess.Concrete.EntityFramework.Contexts
         {
         }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlServer(@"Server=DESKTOP-18AEIRM\SQLEXPRESS01\TrustedConnection=True");
-        }
+        public DbSet<AppUser> AppUsers { get; set; }
+        public DbSet<Message> Messages { get; set; }
+        public DbSet<Room> Rooms { get; set; }
+        public DbSet<RoomMember> RoomMembers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<AppUser>(b =>
-            {
-                b.HasKey(x => x.Id);
-
-                b.Property(x => x.Username)
-                    .IsRequired()
-                    .HasMaxLength(50);
-
-                b.HasIndex(x => x.Username).IsUnique();
-
-                b.Property(x => x.UserType).HasConversion<int>();
-            });
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(RealTimeChatAppContext).Assembly);
         }
-
-        DbSet<AppUser> AppUsers { get; set; }
-
     }
 }
