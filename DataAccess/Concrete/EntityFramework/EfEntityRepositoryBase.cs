@@ -16,7 +16,7 @@ namespace DataAccess.Concrete.EntityFramework
         }
 
 
-        public async Task AddSync(TEntity entity, CancellationToken ct = default)
+        public async Task AddAsync(TEntity entity, CancellationToken ct = default)
         {
             await context.Set<TEntity>().AddAsync(entity, ct);
             await context.SaveChangesAsync(ct);
