@@ -17,11 +17,16 @@ builder.Services.AddDbContext<RealTimeChatAppContext>(options =>
 var app = builder.Build();
 
 
-// To provide auto migration, we need to create a scope and get the DbContext from the service provider, then call the Migrate method on the database. This will apply any pending migrations to the database when the application starts.
-using (var scope = app.Services.CreateScope())
+// To provide auto migration, we need to create a scope and get the DbContext from the service provider,
+// then call the Migrate method on the database.
+// This will apply any pending migrations to the database when the application starts.
+if (app.Environment.IsDevelopment())
 {
-    var db = scope.ServiceProvider.GetRequiredService<RealTimeChatAppContext>();
-    db.Database.Migrate();
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<RealTimeChatAppContext>();
+        db.Database.Migrate();
+    }
 }
 
 

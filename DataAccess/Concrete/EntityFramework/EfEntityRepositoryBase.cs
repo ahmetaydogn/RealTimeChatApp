@@ -37,8 +37,8 @@ namespace DataAccess.Concrete.EntityFramework
         public async Task<IReadOnlyCollection<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>>? filter = null, CancellationToken ct = default)
         {
             return filter == null
-                ? await context.Set<TEntity>().ToListAsync(ct)
-                : await context.Set<TEntity>().Where(filter).ToListAsync(ct);
+                ? await context.Set<TEntity>().AsNoTracking().ToListAsync(ct)
+                : await context.Set<TEntity>().AsNoTracking().Where(filter).ToListAsync(ct);
         }
 
         public async Task<TEntity?> GetAsync(Expression<Func<TEntity, bool>> filter, CancellationToken ct = default)

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Entities.Concrete;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.Concrete.EntityFramework.Contexts
 {
@@ -8,7 +9,30 @@ namespace DataAccess.Concrete.EntityFramework.Contexts
         {
         }
 
-        // DbSet properties for your entities go here
-        // Those are not ready yet, so they are commented out for now.
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlServer(@"Server=DESKTOP-18AEIRM\SQLEXPRESS01\TrustedConnection=True");
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<AppUser>(b =>
+            {
+                b.HasKey(x => x.Id);
+
+                b.Property(x => x.Username)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                b.HasIndex(x => x.Username).IsUnique();
+
+                b.Property(x => x.UserType).HasConversion<short>();
+            });
+        }
+
+        DbSet<AppUser> AppUsers { get; set; }
+
     }
 }
