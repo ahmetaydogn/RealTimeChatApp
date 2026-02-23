@@ -11,7 +11,7 @@ namespace Entities.Concrete
 
         public UserType UserType { get; set; } = UserType.Normal;
 
-        public ICollection<RoomMember> RoomMemberships { get; set; } = new List<RoomMember>();
+        public ICollection<RoomMember> RoomMembers { get; set; } = new List<RoomMember>();
         public ICollection<Message> Messages { get; set; } = new List<Message>();
     }
 }
