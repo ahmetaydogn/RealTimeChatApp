@@ -28,7 +28,7 @@ namespace DataAccess.Concrete.EntityFramework.Contexts
 
                 b.HasIndex(x => x.Username).IsUnique();
 
-                b.Property(x => x.UserType).HasConversion<short>();
+                b.Property(x => x.UserType).HasConversion<int>();
             });
         }
 
