@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 namespace DataAccess.Concrete.EntityFramework
 {
     public class EfEntityRepositoryBase<TContext, TEntity> : IEntityRepository<TEntity>
-        where TContext : DbContext, new()
+        where TContext : DbContext
         where TEntity : class, IEntity, new()
     {
         private readonly TContext context;
