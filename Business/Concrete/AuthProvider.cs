@@ -32,7 +32,8 @@ namespace Business.Concrete
             {
                 Username = registerDto.Username,
                 Email = registerDto.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password)
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
+                DisplayName = registerDto.Username,
             };
 
             await userDal.AddAsync(user);
@@ -43,17 +44,18 @@ namespace Business.Concrete
         {
             var existing = await userDal.GetAsync(x => x.Username == loginDto.Username);
 
-            if (existing == null || BCrypt.Net.BCrypt.Verify(loginDto.Password, existing.PasswordHash))
+            if (existing == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, existing.PasswordHash))
             {
                 throw new Exception("Kullanıcı adı veya şifre hatalı");
             }
+
 
             return GenerateToken(existing);
         }
 
         private string GenerateToken(AppUser user)
         {
-            var secretKey = config["Jwt:SecretKey"];
+            var secretKey = config["Jwt:Key"];
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
