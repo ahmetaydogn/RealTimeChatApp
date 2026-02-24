@@ -4,7 +4,7 @@ using Entities.Enums;
 namespace Entities.Concrete
 {
 
-    public class RoomMember
+    public class RoomMember : IEntity
     {
         public Guid RoomId { get; set; }
         public Room Room { get; set; } = null!;

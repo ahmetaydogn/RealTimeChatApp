@@ -7,6 +7,7 @@ namespace Entities.Concrete
     {
         public string Username { get; set; } = null!;
         public string DisplayName { get; set; } = null!;
+        public string Email { get; set; }
         public string PasswordHash { get; set; } = null!;
 
         public UserType UserType { get; set; } = UserType.Normal;
