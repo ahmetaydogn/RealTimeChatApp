@@ -4,9 +4,9 @@ using DataAccess.Abstract;
 using DataAccess.Concrete.EntityFramework;
 using DataAccess.Concrete.EntityFramework.Contexts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,6 +43,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // To provide auto migration, we need to add the DbContext to the services container.
 builder.Services.AddDbContext<RealTimeChatAppContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// To provide redis cache, we need to add the IConnectionMultiplexer to the services container and configure it to connect to the Redis server using the connection string from the configuration.
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+    ConnectionMultiplexer.Connect(builder.Configuration["Redis:ConnectionString"]));
 
 var app = builder.Build();
 
