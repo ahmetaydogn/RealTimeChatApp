@@ -4,6 +4,7 @@ using DataAccess.Abstract;
 using DataAccess.Concrete.EntityFramework;
 using DataAccess.Concrete.EntityFramework.Contexts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
@@ -48,6 +49,13 @@ builder.Services.AddDbContext<RealTimeChatAppContext>(options =>
 builder.Services.AddSingleton<IConnectionMultiplexer>(
     ConnectionMultiplexer.Connect(builder.Configuration["Redis:ConnectionString"]));
 
+
+// To provide sse support, we need to add response compression services and configure it to include the "text/event-stream" MIME type, which is used for server-sent events.
+builder.Services.AddResponseCompression(opts =>
+{
+    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["text/event-stream"]);
+});
+
 var app = builder.Build();
 
 
@@ -75,6 +83,8 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
+// To provide SSE support, we need to use response compression middleware in the request pipeline. This will enable compression for the server-sent events, which can help reduce bandwidth usage and improve performance.
+app.UseResponseCompression();
 
 app.UseHttpsRedirection();
 
