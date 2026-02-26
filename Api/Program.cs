@@ -22,6 +22,7 @@ builder.Services.AddSwaggerGen();
 // JWT Token Implementation
 builder.Services.AddScoped<IAuthService, AuthProvider>();
 builder.Services.AddScoped<IAppUserDal, EfAppUserDal>();
+builder.Services.AddScoped<IRoomDal, EfRoomDal>();
 
 // To provide jwt token authentication, we need to add the authentication services and configure the JWT bearer options.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
