@@ -69,6 +69,7 @@ namespace Business.Concrete
             var token = new JwtSecurityToken(
                 issuer: config["Jwt:Issuer"],
                 audience: config["Jwt:Audience"],
+                claims: claims,
                 expires: DateTime.Now.AddMinutes(Convert.ToDouble(config["ExpirationTimeInMinutes"])),
                 signingCredentials: credentials
             );
