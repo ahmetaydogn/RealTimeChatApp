@@ -8,18 +8,15 @@ namespace DataAccess.Concrete.EntityFramework.Configurations
     {
         public void Configure(EntityTypeBuilder<RoomMember> builder)
         {
-            builder.HasKey(x => new { x.RoomId, x.UserId });
+            builder.HasKey(x => new { x.RoomId, x.UserId }); // composite key
 
-            builder.Property(x => x.Role).HasConversion<int>();
-
-            builder.HasOne(x => x.Room)
-                .WithMany(r => r.Members)
-                .HasForeignKey(x => x.RoomId);
-                //.OnDelete(DeleteBehavior.Cascade);
+            builder.Property(x => x.Role)
+                .HasConversion<int>();
 
             builder.HasOne(x => x.User)
-                .WithMany(u => u.RoomMembers)
-                .HasForeignKey(x => x.UserId);
+                .WithMany(x => x.RoomMembers)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
