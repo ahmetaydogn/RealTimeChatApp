@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using StackExchange.Redis;
 using System.Text;
 
@@ -17,12 +18,41 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 // JWT Token Implementation
 builder.Services.AddScoped<IAuthService, AuthProvider>();
 builder.Services.AddScoped<IAppUserDal, EfAppUserDal>();
 builder.Services.AddScoped<IRoomDal, EfRoomDal>();
+
+// Chat Service and Manager Implementation
+builder.Services.AddScoped<IChatService, ChatManager>();
+builder.Services.AddScoped<IMessageDal, EfMessageDal>();
+
 
 // To provide jwt token authentication, we need to add the authentication services and configure the JWT bearer options.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
