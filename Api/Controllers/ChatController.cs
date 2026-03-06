@@ -1,10 +1,10 @@
 ﻿using Business.Abstract;
-using DataAccess.Abstract;
 using Entities.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace Api.Controllers
 {
@@ -64,5 +64,23 @@ namespace Api.Controllers
             await subscriber.UnsubscribeAsync(channel);
         }
 
+
+        [HttpGet("history/{roomId}")]
+        public async Task<IActionResult> GetHistory(Guid roomId)
+        {
+            var db = redis.GetDatabase();
+            var cacheKey = $"chat:room:{roomId}:messages";
+            var cached = await db.ListRangeAsync(cacheKey, 0, -1);
+
+            if (cached.Length > 0)
+            {
+                var messages = cached.Select(x => JsonSerializer.Deserialize<object>(x)).ToList();
+                return Ok(messages);
+            }
+
+            // Cache boşsa DB'den çek
+            var dbMessages = await chatService.GetRoomHistoryAsync(roomId);
+            return Ok(dbMessages);
+        }
     }
 }

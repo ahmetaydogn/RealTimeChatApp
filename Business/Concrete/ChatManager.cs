@@ -1,5 +1,6 @@
 ﻿using Business.Abstract;
 using DataAccess.Abstract;
+using DataAccess.Concrete.EntityFramework;
 using Entities.Concrete;
 using Entities.DTOs;
 using StackExchange.Redis;
@@ -21,6 +22,7 @@ namespace Business.Concrete
 
         public async Task SendMessageAsync(Guid senderId, SendMessageDto dto)
         {
+            // Add message to the database
             var message = new Message
             {
                 RoomId = dto.RoomId,
@@ -30,15 +32,28 @@ namespace Business.Concrete
             };
             await messageDal.AddAsync(message);
 
-            var subscriber = redis.GetSubscriber();
-            var channel = $"chatroom:{dto.RoomId}";
-            var payload = JsonSerializer.Serialize(new
+            // Pull last 50 messages from redis cache
+            var db = redis.GetDatabase();
+            var cacheKey = $"chat:room:{dto.RoomId}:messages";
+            var payload = JsonSerializer.Serialize( new
             {
                 senderId,
                 content = dto.Content,
-                sentAt = message.SentAt
+                sentAt = message.SentAt,
             });
-            await subscriber.PublishAsync(channel, payload);
+            await db.ListRightPushAsync(cacheKey, payload);
+            await db.ListTrimAsync(cacheKey, -50, -1); // son 50 mesajı tut
+
+
+            // Redis pub/sub configuration
+            var subscriber = redis.GetSubscriber();
+            var channel = $"chatroom:{dto.RoomId}";
+            await subscriber.PublishAsync(RedisChannel.Literal(channel), payload);
+        }
+
+        public async Task<IReadOnlyCollection<Message>> GetRoomHistoryAsync(Guid roomId)
+        {
+            return await messageDal.GetAllAsync(x => x.RoomId == roomId);
         }
     }
 }
