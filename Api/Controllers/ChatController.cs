@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Threading.Channels;
 
 namespace Api.Controllers
 {
@@ -22,7 +23,7 @@ namespace Api.Controllers
             chatService = _chatService;
         }
 
-        
+
         [HttpPost("send")]
         [Authorize]
         public async Task<IActionResult> SendMessage(SendMessageDto dto)
@@ -36,32 +37,50 @@ namespace Api.Controllers
         [HttpGet("stream/{roomId}")]
         public async Task Stream(Guid roomId, CancellationToken ct)
         {
+            // Those are okey
             Response.Headers["Content-Type"] = "text/event-stream";
             Response.Headers["Cache-Control"] = "no-cache";
             Response.Headers["Connection"] = "keep-alive";
 
-            var subscriber = redis.GetSubscriber();
+
+            Channel<string> messageChannel = Channel.CreateUnbounded<string>(new UnboundedChannelOptions
+            {
+                SingleReader = true,
+                SingleWriter = false
+            });
             var channel = $"chatroom:{roomId}";
 
-            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously); ;
-
-            ct.Register(() => tcs.TrySetResult(true));
-
+            var subscriber = redis.GetSubscriber();
             await subscriber.SubscribeAsync(channel, async (ch, message) =>
             {
                 if (ct.IsCancellationRequested)
                     return;
 
-                await Response.WriteAsync($"data: {message}\n\n", ct);
-                await Response.Body.FlushAsync(ct);
+                await messageChannel.Writer.WriteAsync($"data: {message}\n\n", ct);
             });
 
             await Response.WriteAsync("event: ping\ndata: connected\n\n", ct);
             await Response.Body.FlushAsync(ct);
 
-            await tcs.Task;
+            try
+            {
+                await foreach (var msg in messageChannel.Reader.ReadAllAsync(ct))
+                {
+                    await Response.WriteAsync(msg, ct);
+                    await Response.Body.FlushAsync(ct);
+                }
 
-            await subscriber.UnsubscribeAsync(channel);
+            }
+            catch (OperationCanceledException exp)
+            {
+                // TODO : Client disconnected - expected, nothing to do
+                throw;
+            }
+            finally
+            {
+                messageChannel.Writer.TryComplete();
+                await subscriber.UnsubscribeAsync(channel);
+            }
         }
 
 
