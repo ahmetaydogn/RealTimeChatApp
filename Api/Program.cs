@@ -1,4 +1,4 @@
-using Business.Abstract;
+﻿using Business.Abstract;
 using Business.Concrete;
 using DataAccess.Abstract;
 using DataAccess.Concrete.EntityFramework;
@@ -46,12 +46,17 @@ builder.Services.AddSwaggerGen(c =>
 
 // JWT Token Implementation
 builder.Services.AddScoped<IAuthService, AuthProvider>();
+
+// Data Access Layer Implementation
 builder.Services.AddScoped<IAppUserDal, EfAppUserDal>();
 builder.Services.AddScoped<IRoomDal, EfRoomDal>();
+builder.Services.AddScoped<IRoomMemberDal, EfRoomMemberDal>();
 
 // Chat Service and Manager Implementation
 builder.Services.AddScoped<IChatService, ChatManager>();
+builder.Services.AddScoped<IRoomService, RoomManager>();
 builder.Services.AddScoped<IMessageDal, EfMessageDal>();
+builder.Services.AddScoped<IRoomMemberService, RoomMemberManager>();
 
 
 // To provide jwt token authentication, we need to add the authentication services and configure the JWT bearer options.
@@ -116,6 +121,12 @@ app.UseAuthorization();
 
 // To provide SSE support, we need to use response compression middleware in the request pipeline. This will enable compression for the server-sent events, which can help reduce bandwidth usage and improve performance.
 app.UseResponseCompression();
+
+// Middlewares
+// Ex:
+// app.UseMiddleware<SecurityMiddleware>();
+
+
 
 app.UseHttpsRedirection();
 
