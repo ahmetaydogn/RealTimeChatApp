@@ -15,12 +15,20 @@ namespace Api.Controllers
     public class ChatController : ControllerBase
     {
         private readonly IChatService chatService;
+        private readonly IRoomMemberService roomMemberService;
+        private readonly IRoomService roomService;
         private readonly IConnectionMultiplexer redis;
 
-        public ChatController(IConnectionMultiplexer _redis, IChatService _chatService)
+        public ChatController(
+            IConnectionMultiplexer _redis, 
+            IChatService _chatService, 
+            IRoomMemberService _roomMemberService,
+            IRoomService _roomService)
         {
             redis = _redis;
             chatService = _chatService;
+            roomMemberService = _roomMemberService;
+            roomService = _roomService;
         }
 
 
@@ -29,14 +37,31 @@ namespace Api.Controllers
         public async Task<IActionResult> SendMessage(SendMessageDto dto)
         {
             var senderId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+            // Check user is a member of the room before sending message
+            if (!await roomMemberService.IsUserInRoomAsync(dto.RoomId, senderId))
+            {
+                Response.StatusCode = StatusCodes.Status403Forbidden;
+                return StatusCode(403, "You are not a member of this room.");
+            }
+
             await chatService.SendMessageAsync(senderId, dto);
             return Ok();
         }
 
 
+        [Authorize]
         [HttpGet("stream/{roomId}")]
         public async Task Stream(Guid roomId, CancellationToken ct)
         {
+            var senderId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            if (!await roomMemberService.IsUserInRoomAsync(roomId, senderId))
+            {
+                Response.StatusCode = StatusCodes.Status403Forbidden;
+                await Response.WriteAsync("You are not a member of this room.", ct);
+                return;
+            }
+
             // Those are okey
             Response.Headers["Content-Type"] = "text/event-stream";
             Response.Headers["Cache-Control"] = "no-cache";
@@ -84,21 +109,18 @@ namespace Api.Controllers
         }
 
 
+        [Authorize]
         [HttpGet("history/{roomId}")]
         public async Task<IActionResult> GetHistory(Guid roomId)
         {
-            var db = redis.GetDatabase();
-            var cacheKey = $"chat:room:{roomId}:messages";
-            var cached = await db.ListRangeAsync(cacheKey, 0, -1);
-
-            if (cached.Length > 0)
+            var senderId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            if (!await roomMemberService.IsUserInRoomAsync(roomId, senderId))
             {
-                var messages = cached.Select(x => JsonSerializer.Deserialize<object>(x)).ToList();
-                return Ok(messages);
+                return StatusCode(403, "You are not a member of this room.");
             }
 
-            // Cache boşsa DB'den çek
             var dbMessages = await chatService.GetRoomHistoryAsync(roomId);
+
             return Ok(dbMessages);
         }
     }
