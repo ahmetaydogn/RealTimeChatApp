@@ -1,8 +1,9 @@
-﻿using DataAccess.Abstract;
+﻿using Business.Abstract;
 using Entities.Concrete;
 using Entities.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 
 namespace Api.Controllers
 {
@@ -10,38 +11,77 @@ namespace Api.Controllers
     [ApiController]
     public class RoomController : ControllerBase
     {
-        private readonly IRoomDal roomDal;
+        private readonly IRoomService roomService;
 
-        public RoomController(IRoomDal _roomDal)
+        public RoomController(IRoomService roomService)
         {
-            roomDal = _roomDal;
+            this.roomService = roomService;
         }
 
         [HttpPost("PostRoom")]
         public async Task<IActionResult> AddRoom(RoomDto room)
         {
-            // worst validation
-            if (room.RoomName.IsNullOrEmpty())
+            try
             {
-                return BadRequest();
+                await roomService.AddRoomAsync(room);
+                return Ok();
             }
-
-            var roomToAdd = new Room()
+            catch (ArgumentException ex)
             {
-                RoomName = room.RoomName,
-                AdminOnly = room.AdminOnly
-            };
-
-            await roomDal.AddAsync(roomToAdd);
-            return Ok();
-            
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("GetRooms")]
         public async Task<IReadOnlyCollection<Room>> GetRooms()
         {
-            var content = await roomDal.GetAllAsync();
-            return content;
+            return await roomService.GetRoomsAsync();
+        }
+
+        [HttpPost("join/{roomId}")]
+        [Authorize]
+        public async Task<IActionResult> JoinRoom(Guid roomId)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                await roomService.JoinRoomAsync(roomId, userId);
+                return Ok(new { message = "User joined the room." });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+        }
+
+        [HttpPost("leave/{roomId}")]
+        [Authorize]
+        public async Task<IActionResult> LeaveRoom(Guid roomId)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                await roomService.LeaveRoomAsync(roomId, userId);
+                return Ok(new { message = "User left the room." });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }

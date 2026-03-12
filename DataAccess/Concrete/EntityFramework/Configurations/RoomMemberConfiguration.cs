@@ -13,6 +13,11 @@ namespace DataAccess.Concrete.EntityFramework.Configurations
             builder.Property(x => x.Role)
                 .HasConversion<int>();
 
+            builder.HasOne(x => x.Room)
+                .WithMany(x=>x.Members)
+                .HasForeignKey(x => x.RoomId)
+                .OnDelete(DeleteBehavior.Cascade); // If a room deleted, it'll remove all of the members that related with deleted room
+
             builder.HasOne(x => x.User)
                 .WithMany(x => x.RoomMembers)
                 .HasForeignKey(x => x.UserId)
