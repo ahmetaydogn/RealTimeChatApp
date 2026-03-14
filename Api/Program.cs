@@ -1,4 +1,5 @@
-﻿using Business.Abstract;
+﻿using Api.Middlewares;
+using Business.Abstract;
 using Business.Concrete;
 using DataAccess.Abstract;
 using DataAccess.Concrete.EntityFramework;
@@ -119,13 +120,13 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
-// To provide SSE support, we need to use response compression middleware in the request pipeline. This will enable compression for the server-sent events, which can help reduce bandwidth usage and improve performance.
-app.UseResponseCompression();
-
 // Middlewares
 // Ex:
-// app.UseMiddleware<SecurityMiddleware>();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
+
+// To provide SSE support, we need to use response compression middleware in the request pipeline. This will enable compression for the server-sent events, which can help reduce bandwidth usage and improve performance.
+app.UseResponseCompression();
 
 
 app.UseHttpsRedirection();
