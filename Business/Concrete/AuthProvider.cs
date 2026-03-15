@@ -1,4 +1,5 @@
 ﻿using Business.Abstract;
+using Business.Exceptions;
 using DataAccess.Abstract;
 using Entities.Concrete;
 using Entities.DTOs;
@@ -26,7 +27,7 @@ namespace Business.Concrete
             var existing = await userDal.GetAsync(x => x.Username == registerDto.Username);
 
             if (existing != null)
-                throw new Exception("Kullanıcı zaten mevcut.");
+                throw new InvalidOperationException("Kullanıcı zaten mevcut.");
 
             var user = new AppUser()
             {
@@ -46,7 +47,7 @@ namespace Business.Concrete
 
             if (existing == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, existing.PasswordHash))
             {
-                throw new Exception("Kullanıcı adı veya şifre hatalı");
+                throw new AuthenticationFailedException("Kullanıcı adı veya şifre hatalı");
             }
 
 
