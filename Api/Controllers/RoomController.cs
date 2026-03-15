@@ -1,4 +1,5 @@
 ﻿using Business.Abstract;
+using Business.Exceptions;
 using Entities.Concrete;
 using Entities.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -21,15 +22,8 @@ namespace Api.Controllers
         [HttpPost("PostRoom")]
         public async Task<IActionResult> AddRoom(RoomDto room)
         {
-            try
-            {
-                await roomService.AddRoomAsync(room);
-                return Ok();
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            await roomService.AddRoomAsync(room);
+            return Ok();
         }
 
         [HttpGet("GetRooms")]
@@ -48,19 +42,8 @@ namespace Api.Controllers
                 return Unauthorized();
             }
 
-            try
-            {
-                await roomService.JoinRoomAsync(roomId, userId);
-                return Ok(new { message = "User joined the room." });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(ex.Message);
-            }
+            await roomService.JoinRoomAsync(roomId, userId);
+            return Ok(new { message = "User joined the room." });
         }
 
         [HttpPost("leave/{roomId}")]
@@ -73,15 +56,8 @@ namespace Api.Controllers
                 return Unauthorized();
             }
 
-            try
-            {
-                await roomService.LeaveRoomAsync(roomId, userId);
-                return Ok(new { message = "User left the room." });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
+            await roomService.LeaveRoomAsync(roomId, userId);
+            return Ok(new { message = "User left the room." });
         }
     }
 }
