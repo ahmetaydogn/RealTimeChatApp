@@ -1,4 +1,5 @@
 ﻿using Business.Abstract;
+using Business.Exceptions;
 using DataAccess.Abstract;
 using DataAccess.Concrete.EntityFramework;
 using Entities.Concrete;
@@ -35,7 +36,7 @@ namespace Business.Concrete
         {
             if(!await CanSendMessage(dto.RoomId, senderId))
             {
-                throw new UnauthorizedAccessException("You do not have permission to send messages in this room.");
+                throw new AuthorizationFailedException("You do not have permission to send messages in this room.");
             }
 
 
