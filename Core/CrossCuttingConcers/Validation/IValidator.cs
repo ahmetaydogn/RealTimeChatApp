@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Core.Entities;
 
 namespace Core.CrossCuttingConcers.Validation
 {
-    internal interface IValidator
+    public interface IValidator<T> where T : class, new()
     {
+        ValidationResult Validate(T entity);
     }
 }
