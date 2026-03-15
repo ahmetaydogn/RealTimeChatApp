@@ -1,4 +1,6 @@
 ﻿
+using Business.Exceptions;
+
 namespace Api.Middlewares
 {
     public class ExceptionHandlingMiddleware
@@ -24,12 +26,19 @@ namespace Api.Middlewares
                 {
                     case KeyNotFoundException _:
                         await MiddlewareHelper.ConfigureError(context, StatusCodes.Status404NotFound, e.Message);
-
                         break;
 
-                    case UnauthorizedAccessException _:
+                    // My own exception classes
+                    case AuthenticationFailedException _:
+                        await MiddlewareHelper.ConfigureError(context, StatusCodes.Status401Unauthorized, e.Message);
+                        break;
+                    case AuthorizationFailedException _:
                         await MiddlewareHelper.ConfigureError(context, StatusCodes.Status403Forbidden, e.Message);
                         break;
+                    case ConflictException _:
+                        await MiddlewareHelper.ConfigureError(context, StatusCodes.Status409Conflict, e.Message);
+                        break;
+
 
                     case InvalidOperationException _:
                         await MiddlewareHelper.ConfigureError(context, StatusCodes.Status400BadRequest, e.Message);
@@ -37,6 +46,10 @@ namespace Api.Middlewares
 
                     case ArgumentException _:
                         await MiddlewareHelper.ConfigureError(context, StatusCodes.Status400BadRequest, e.Message);
+                        break;
+
+                    case OperationCanceledException _:
+                        logger.LogDebug("Request was cancelled.");
                         break;
 
                     default:
