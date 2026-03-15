@@ -1,4 +1,5 @@
 ﻿using Business.Abstract;
+using Business.Exceptions;
 using DataAccess.Abstract;
 using Entities.Concrete;
 using Entities.DTOs;
@@ -58,7 +59,7 @@ namespace Business.Concrete
             var existing = await roomMemberDal.GetAsync(x => x.RoomId == roomId && x.UserId == userId);
             if (existing != null)
             {
-                throw new InvalidOperationException("User is already a member of this room.");
+                throw new ConflictException("User is already a member of this room.");
             }
 
             var roomMember = new RoomMember
